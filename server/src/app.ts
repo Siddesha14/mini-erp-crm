@@ -5,6 +5,7 @@ import { authenticate } from "./middleware/auth.middleware.js";
 import customerRoutes from "./customers/customer.routes.js";
 import productRoutes from "./products/product.routes.js";
 import inventoryRoutes from "./inventory/inventory.routes.js";
+import challanRoutes from "./challans/challan.routes.js";
 
 const app = express();
 
@@ -28,6 +29,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/inventory", inventoryRoutes);
+app.use("/api/challans", challanRoutes);
+
 
 app.get("/api/auth/me", authenticate, (req, res) => {
   res.status(200).json({
