@@ -3,6 +3,7 @@ import cors from "cors";
 import authRoutes from "./auth/auth.routes.js";
 import { authenticate } from "./middleware/auth.middleware.js";
 import customerRoutes from "./customers/customer.routes.js";
+import productRoutes from "./products/product.routes.js";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/customers", customerRoutes);
+app.use("/api/products", productRoutes);
 
 app.get("/api/auth/me", authenticate, (req, res) => {
   res.status(200).json({
