@@ -11,6 +11,12 @@ export const getDashboardSummary = async (
       productCount,
       lowStockCount,
       challanCount,
+      confirmedChallanCount,
+      draftChallanCount,
+      cancelledChallanCount,
+      totalStock,
+      stockInQuantity,
+      stockOutQuantity,
       recentChallans,
       lowStockProducts,
     ] = await prisma.$transaction([
@@ -31,6 +37,54 @@ export const getDashboardSummary = async (
 
       // Total challans
       prisma.challan.count(),
+
+      // Confirmed challans
+      prisma.challan.count({
+        where: {
+          status: "CONFIRMED",
+        },
+      }),
+
+      // Draft challans
+      prisma.challan.count({
+        where: {
+          status: "DRAFT",
+        },
+      }),
+
+      // Cancelled challans
+      prisma.challan.count({
+        where: {
+          status: "CANCELLED",
+        },
+      }),
+
+      // Total current stock across all products
+      prisma.product.aggregate({
+        _sum: {
+          currentStock: true,
+        },
+      }),
+
+      // Total Stock IN movements
+      prisma.stockMovement.aggregate({
+        where: {
+          type: "IN",
+        },
+        _sum: {
+          quantity: true,
+        },
+      }),
+
+      // Total Stock OUT movements
+      prisma.stockMovement.aggregate({
+        where: {
+          type: "OUT",
+        },
+        _sum: {
+          quantity: true,
+        },
+      }),
 
       // Latest 5 challans
       prisma.challan.findMany({
@@ -79,12 +133,21 @@ export const getDashboardSummary = async (
     return res.status(200).json({
       success: true,
       data: {
+        // Existing dashboard fields
         customers: customerCount,
         products: productCount,
         lowStockProducts: lowStockCount,
         challans: challanCount,
         recentChallans,
         lowStockItems: lowStockProducts,
+
+        // Analytics
+        confirmedChallans: confirmedChallanCount,
+        draftChallans: draftChallanCount,
+        cancelledChallans: cancelledChallanCount,
+        totalStock: totalStock._sum.currentStock ?? 0,
+        stockInQuantity: stockInQuantity._sum.quantity ?? 0,
+        stockOutQuantity: stockOutQuantity._sum.quantity ?? 0,
       },
     });
   } catch (error) {

@@ -8,6 +8,9 @@ import {
   CheckCircle2,
   Clock3,
   XCircle,
+  Boxes,
+  ArrowDownToLine,
+  ArrowUpFromLine,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,7 +21,9 @@ import StatCard from "../components/StatCard";
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [summary, setSummary] =
+    useState<DashboardSummary | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -69,7 +74,6 @@ const Dashboard = () => {
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="animate-pulse space-y-6">
           <div className="h-8 w-40 rounded-lg bg-slate-200" />
-
           <div className="h-4 w-72 rounded bg-slate-200" />
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -80,6 +84,8 @@ const Dashboard = () => {
               />
             ))}
           </div>
+
+          <div className="h-48 rounded-xl bg-slate-200" />
 
           <div className="grid gap-6 xl:grid-cols-2">
             <div className="h-80 rounded-xl bg-slate-200" />
@@ -104,21 +110,17 @@ const Dashboard = () => {
     <div className="p-4 sm:p-6 lg:p-8">
       {/* HEADER */}
       <div className="mb-8">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Overview
-            </p>
+        <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          Overview
+        </p>
 
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Dashboard
-            </h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          Dashboard
+        </h1>
 
-            <p className="mt-1 text-sm text-slate-500">
-              Here's what's happening with your business today.
-            </p>
-          </div>
-        </div>
+        <p className="mt-1 text-sm text-slate-500">
+          Here's what's happening with your business today.
+        </p>
       </div>
 
       {/* KPI CARDS */}
@@ -151,6 +153,167 @@ const Dashboard = () => {
           icon={FileText}
         />
       </div>
+
+      {/* BUSINESS ANALYTICS */}
+      <section className="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <div>
+            <h2 className="font-semibold text-slate-900">
+              Business Overview
+            </h2>
+
+            <p className="mt-0.5 text-xs text-slate-400">
+              Current operational activity
+            </p>
+          </div>
+        </div>
+
+        <div className="grid divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
+          {/* CURRENT STOCK */}
+          <div className="p-5">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="rounded-lg bg-slate-100 p-2">
+                <Boxes size={17} className="text-slate-600" />
+              </div>
+
+              <span className="text-xs font-medium text-slate-500">
+                Current Stock
+              </span>
+            </div>
+
+            <p className="text-2xl font-bold text-slate-900">
+              {summary.totalStock.toLocaleString("en-IN")}
+            </p>
+
+            <p className="mt-1 text-xs text-slate-400">
+              Total units across products
+            </p>
+          </div>
+
+          {/* STOCK IN */}
+          <div className="p-5">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="rounded-lg bg-emerald-50 p-2">
+                <ArrowDownToLine
+                  size={17}
+                  className="text-emerald-600"
+                />
+              </div>
+
+              <span className="text-xs font-medium text-slate-500">
+                Stock In
+              </span>
+            </div>
+
+            <p className="text-2xl font-bold text-slate-900">
+              {summary.stockInQuantity.toLocaleString("en-IN")}
+            </p>
+
+            <p className="mt-1 text-xs text-slate-400">
+              Units received
+            </p>
+          </div>
+
+          {/* STOCK OUT */}
+          <div className="p-5">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="rounded-lg bg-orange-50 p-2">
+                <ArrowUpFromLine
+                  size={17}
+                  className="text-orange-600"
+                />
+              </div>
+
+              <span className="text-xs font-medium text-slate-500">
+                Stock Out
+              </span>
+            </div>
+
+            <p className="text-2xl font-bold text-slate-900">
+              {summary.stockOutQuantity.toLocaleString("en-IN")}
+            </p>
+
+            <p className="mt-1 text-xs text-slate-400">
+              Units dispatched
+            </p>
+          </div>
+
+          {/* CONFIRMED */}
+          <div className="p-5">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="rounded-lg bg-blue-50 p-2">
+                <CheckCircle2
+                  size={17}
+                  className="text-blue-600"
+                />
+              </div>
+
+              <span className="text-xs font-medium text-slate-500">
+                Confirmed Challans
+              </span>
+            </div>
+
+            <p className="text-2xl font-bold text-slate-900">
+              {summary.confirmedChallans.toLocaleString("en-IN")}
+            </p>
+
+            <p className="mt-1 text-xs text-slate-400">
+              Successfully processed
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* CHALLAN STATUS */}
+      <section className="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <h2 className="font-semibold text-slate-900">
+            Challan Status
+          </h2>
+
+          <p className="mt-0.5 text-xs text-slate-400">
+            Current delivery document breakdown
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-3">
+          <div className="border-b border-slate-100 p-5 sm:border-b-0 sm:border-r">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-500">
+                Draft
+              </span>
+
+              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                {summary.draftChallans}
+              </span>
+            </div>
+          </div>
+
+          <div className="border-b border-slate-100 p-5 sm:border-b-0 sm:border-r">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-500">
+                Confirmed
+              </span>
+
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                {summary.confirmedChallans}
+              </span>
+            </div>
+          </div>
+
+          <div className="p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-500">
+                Cancelled
+              </span>
+
+              <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">
+                {summary.cancelledChallans}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* LOWER SECTION */}
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
@@ -271,7 +434,10 @@ const Dashboard = () => {
           ) : (
             <div className="divide-y divide-slate-100">
               {summary.recentChallans.map((challan) => {
-                const status = getStatusStyles(challan.status);
+                const status = getStatusStyles(
+                  challan.status
+                );
+
                 const StatusIcon = status.icon;
 
                 return (

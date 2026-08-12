@@ -29,7 +29,16 @@ export interface DashboardSummary {
   products: number;
   lowStockProducts: number;
   challans: number;
-  recentChallans: DashboardChallan[];
+
+  confirmedChallans: number;
+ draftChallans: number;
+ cancelledChallans: number;
+
+totalStock: number;
+stockInQuantity: number;
+stockOutQuantity: number;
+
+ recentChallans: DashboardChallan[];
   lowStockItems: LowStockItem[];
 }
 
