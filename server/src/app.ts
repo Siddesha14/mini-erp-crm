@@ -6,12 +6,24 @@ import customerRoutes from "./customers/customer.routes.js";
 import productRoutes from "./products/product.routes.js";
 import inventoryRoutes from "./inventory/inventory.routes.js";
 import challanRoutes from "./challans/challan.routes.js";
+import dashboardRoutes from "./dashboard/dashboard.routes.js";
 
 const app = express();
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "http://localhost:5174",
+      ];
+
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
   })
 );
 
@@ -30,6 +42,7 @@ app.use("/api/customers", customerRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/challans", challanRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 
 app.get("/api/auth/me", authenticate, (req, res) => {
