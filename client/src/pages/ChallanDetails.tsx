@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
+  Download,
   FileText,
   Loader2,
   XCircle,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import jsPDF from "jspdf";
 
 import {
   cancelChallan,
@@ -19,12 +21,10 @@ const ChallanDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const [challan, setChallan] =
-    useState<Challan | null>(null);
-
+  const [challan, setChallan] = useState<Challan | null>(null);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] =
-    useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [error, setError] = useState("");
 
   const loadChallan = async () => {
@@ -38,16 +38,11 @@ const ChallanDetails = () => {
       setLoading(true);
       setError("");
 
-      const response = await getChallanById(
-        Number(id)
-      );
+      const response = await getChallanById(Number(id));
 
       setChallan(response.data);
     } catch (err: any) {
-      console.error(
-        "Load challan error:",
-        err
-      );
+      console.error("Load challan error:", err);
 
       setError(
         err?.response?.data?.message ||
@@ -75,16 +70,11 @@ const ChallanDetails = () => {
       setActionLoading(true);
       setError("");
 
-      const response = await confirmChallan(
-        challan.id
-      );
+      const response = await confirmChallan(challan.id);
 
       setChallan(response.data);
     } catch (err: any) {
-      console.error(
-        "Confirm challan error:",
-        err
-      );
+      console.error("Confirm challan error:", err);
 
       setError(
         err?.response?.data?.message ||
@@ -108,16 +98,11 @@ const ChallanDetails = () => {
       setActionLoading(true);
       setError("");
 
-      const response = await cancelChallan(
-        challan.id
-      );
+      const response = await cancelChallan(challan.id);
 
       setChallan(response.data);
     } catch (err: any) {
-      console.error(
-        "Cancel challan error:",
-        err
-      );
+      console.error("Cancel challan error:", err);
 
       setError(
         err?.response?.data?.message ||
@@ -125,6 +110,295 @@ const ChallanDetails = () => {
       );
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!challan || pdfLoading) return;
+
+    try {
+      setPdfLoading(true);
+
+      const doc = new jsPDF();
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      const formatCurrency = (value: number) =>
+        `Rs. ${value.toLocaleString("en-IN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`;
+
+      const customerName =
+        challan.customer?.businessName ||
+        challan.customer?.name ||
+        "Unknown Customer";
+
+      const createdDate = new Date(
+        challan.createdAt
+      ).toLocaleString("en-IN");
+
+      /* ---------------- HEADER ---------------- */
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(20);
+      doc.text("MINI ERP", 20, 25);
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text("Operations & Inventory Management", 20, 32);
+
+      doc.setTextColor(0, 0, 0);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("DELIVERY CHALLAN", pageWidth - 20, 25, {
+        align: "right",
+      });
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Challan No: ${challan.challanNumber}`,
+        pageWidth - 20,
+        33,
+        { align: "right" }
+      );
+
+      doc.text(
+        `Date: ${createdDate}`,
+        pageWidth - 20,
+        40,
+        { align: "right" }
+      );
+
+      /* ---------------- DIVIDER ---------------- */
+
+      doc.setDrawColor(220, 220, 220);
+      doc.line(20, 48, pageWidth - 20, 48);
+
+      /* ---------------- CUSTOMER ---------------- */
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text("CUSTOMER DETAILS", 20, 62);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+
+      doc.text(`Name: ${customerName}`, 20, 70);
+
+      if (
+        challan.customer?.businessName &&
+        challan.customer.businessName !==
+          challan.customer.name
+      ) {
+        doc.text(
+          `Contact: ${challan.customer.name}`,
+          20,
+          77
+        );
+      }
+
+      if (challan.customer?.mobile) {
+        doc.text(
+          `Mobile: ${challan.customer.mobile}`,
+          20,
+          84
+        );
+      }
+
+      
+
+      /* ---------------- STATUS ---------------- */
+
+      const statusY = 62;
+
+      doc.setFont("helvetica", "bold");
+      doc.text("STATUS", pageWidth - 80, statusY);
+
+      doc.setFont("helvetica", "normal");
+
+      doc.text(
+        challan.status,
+        pageWidth - 80,
+        statusY + 8
+      );
+
+      /* ---------------- TABLE ---------------- */
+
+      const tableStartY = 108;
+
+      doc.setFillColor(245, 247, 250);
+      doc.rect(
+        20,
+        tableStartY,
+        pageWidth - 40,
+        10,
+        "F"
+      );
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+
+      doc.text("PRODUCT", 24, tableStartY + 7);
+      doc.text("SKU", 85, tableStartY + 7);
+      doc.text("QTY", 125, tableStartY + 7, {
+        align: "right",
+      });
+      doc.text("UNIT PRICE", 160, tableStartY + 7, {
+        align: "right",
+      });
+      doc.text("AMOUNT", pageWidth - 24, tableStartY + 7, {
+        align: "right",
+      });
+
+      let currentY = tableStartY + 18;
+
+      doc.setFont("helvetica", "normal");
+
+      let grandTotal = 0;
+
+      challan.items.forEach((item) => {
+        const amount =
+          item.unitPriceSnapshot * item.quantity;
+
+        grandTotal += amount;
+
+        const productName =
+          item.productNameSnapshot.length > 28
+            ? `${item.productNameSnapshot.substring(0, 28)}...`
+            : item.productNameSnapshot;
+
+        doc.text(productName, 24, currentY);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.text(item.skuSnapshot, 85, currentY);
+
+        doc.setFontSize(9);
+        doc.text(
+          String(item.quantity),
+          125,
+          currentY,
+          { align: "right" }
+        );
+
+        doc.text(
+          formatCurrency(item.unitPriceSnapshot),
+          160,
+          currentY,
+          { align: "right" }
+        );
+
+        doc.text(
+          formatCurrency(amount),
+          pageWidth - 24,
+          currentY,
+          { align: "right" }
+        );
+
+        doc.setDrawColor(235, 235, 235);
+        doc.line(
+          20,
+          currentY + 4,
+          pageWidth - 20,
+          currentY + 4
+        );
+
+        currentY += 12;
+
+        if (currentY > 250) {
+          doc.addPage();
+          currentY = 25;
+        }
+      });
+
+      /* ---------------- TOTALS ---------------- */
+
+      currentY += 8;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+
+      doc.text(
+        "Total Quantity:",
+        125,
+        currentY
+      );
+
+      doc.text(
+        String(challan.totalQuantity),
+        pageWidth - 24,
+        currentY,
+        { align: "right" }
+      );
+
+      currentY += 10;
+
+      doc.text("Total Amount:", 125, currentY);
+
+      doc.text(
+        formatCurrency(grandTotal),
+        pageWidth - 24,
+        currentY,
+        { align: "right" }
+      );
+
+      /* ---------------- FOOTER ---------------- */
+
+      const footerY = 270;
+
+      doc.setDrawColor(220, 220, 220);
+      doc.line(20, footerY - 8, pageWidth - 20, footerY - 8);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(110, 110, 110);
+
+      doc.text(
+        "Generated by Mini ERP",
+        20,
+        footerY
+      );
+
+      doc.text(
+        `Challan Status: ${challan.status}`,
+        pageWidth - 20,
+        footerY,
+        { align: "right" }
+      );
+
+      doc.setTextColor(0, 0, 0);
+
+      /* ---------------- SIGNATURE ---------------- */
+
+      doc.setFontSize(9);
+
+      doc.line(
+        pageWidth - 80,
+        footerY - 25,
+        pageWidth - 20,
+        footerY - 25
+      );
+
+      doc.text(
+        "Authorized Signature",
+        pageWidth - 50,
+        footerY - 18,
+        { align: "center" }
+      );
+
+      doc.save(
+        `${challan.challanNumber}.pdf`
+      );
+    } catch (err) {
+      console.error("PDF generation error:", err);
+
+      setError("Unable to generate PDF.");
+    } finally {
+      setPdfLoading(false);
     }
   };
 
@@ -157,10 +431,8 @@ const ChallanDetails = () => {
       <div className="p-4 sm:p-6 lg:p-8">
         <button
           type="button"
-          onClick={() =>
-            navigate("/challans")
-          }
-          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+          onClick={() => navigate("/challans")}
+          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
         >
           <ArrowLeft size={17} />
           Back to Challans
@@ -178,9 +450,7 @@ const ChallanDetails = () => {
       {/* Back */}
       <button
         type="button"
-        onClick={() =>
-          navigate("/challans")
-        }
+        onClick={() => navigate("/challans")}
         className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
       >
         <ArrowLeft size={17} />
@@ -191,10 +461,7 @@ const ChallanDetails = () => {
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="rounded-xl bg-slate-100 p-3">
-            <FileText
-              size={24}
-              className="text-slate-700"
-            />
+            <FileText size={24} className="text-slate-700" />
           </div>
 
           <div>
@@ -211,11 +478,33 @@ const ChallanDetails = () => {
           </div>
         </div>
 
-        <span
-          className={`w-fit rounded-full px-3 py-1.5 text-xs font-semibold ${statusClasses()}`}
-        >
-          {challan.status}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`w-fit rounded-full px-3 py-1.5 text-xs font-semibold ${statusClasses()}`}
+          >
+            {challan.status}
+          </span>
+
+          <button
+            type="button"
+            onClick={handleDownloadPDF}
+            disabled={pdfLoading}
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {pdfLoading ? (
+              <Loader2
+                size={16}
+                className="animate-spin"
+              />
+            ) : (
+              <Download size={16} />
+            )}
+
+            {pdfLoading
+              ? "Generating..."
+              : "Download PDF"}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -235,8 +524,7 @@ const ChallanDetails = () => {
             "Unknown Customer"}
         </p>
 
-        {challan.customer
-          ?.businessName && (
+        {challan.customer?.businessName && (
           <p className="mt-1 text-sm text-slate-500">
             {challan.customer.businessName}
           </p>
@@ -315,12 +603,9 @@ const ChallanDetails = () => {
                     {(
                       item.unitPriceSnapshot *
                       item.quantity
-                    ).toLocaleString(
-                      "en-IN",
-                      {
-                        minimumFractionDigits: 2,
-                      }
-                    )}
+                    ).toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
                   </td>
                 </tr>
               ))}
