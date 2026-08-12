@@ -17,12 +17,13 @@ app.use(
         "http://localhost:5173",
         "http://localhost:5174",
         "http://localhost:5175",
-        "https://mini-erp-cmmfin6xq-siddesha-m-s-projects.vercel.app",
+        "https://mini-erp-2slfzgybg-siddesha-m-s-projects.vercel.app",
       ];
 
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.error("CORS blocked origin:", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
